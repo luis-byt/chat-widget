@@ -1,0 +1,28 @@
+{
+  "name": "chat-widget",
+  "version": "1.2.0",
+  "type": "module",
+  "description": "Embeddable chat widget for Django, Vue and plain HTML",
+  "main": "dist/chat-widget.umd.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rollup -c"
+  },
+  "keywords": [
+    "chat",
+    "widget",
+    "django",
+    "websocket",
+    "realtime"
+  ],
+  "author": "Aware",
+  "license": "MIT",
+  "devDependencies": {
+    "rollup": "^4.9.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-commonjs": "^25.0.7"
+  }
+}
+
