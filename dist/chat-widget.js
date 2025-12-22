@@ -1,3 +1,9 @@
+/*!
+ * LuisByt Chat Widget v1.0.2
+ * https://github.com/luis-byt/chat-widget
+ * © 2025 Byt
+ * MIT License
+ */
 var ChatWidget = (function () {
   'use strict';
 
@@ -150,6 +156,25 @@ var ChatWidget = (function () {
       // Días anteriores → fecha
       return date.toLocaleDateString()
     }
+
+    function formatLastMessagePreview(lastMessage) {
+      if (!lastMessage) return "Sin mensajes"
+    
+      // 📎 Si hay adjuntos
+      if (lastMessage.attachments && lastMessage.attachments.length > 0) {
+        const count = lastMessage.attachments.length;
+        return count === 1 ? "1 Adjunto" : `${count} Adjuntos`
+      }
+    
+      // 💬 Texto normal (una sola línea)
+      if (lastMessage.text) {
+        const text = lastMessage.text.trim();
+        return text.length > 40 ? text.slice(0, 40) + "…" : text
+      }
+    
+      return "Mensaje"
+    }
+    
 
     function ChatWidget(options) {
       this.options = options || {};
@@ -349,20 +374,18 @@ var ChatWidget = (function () {
            otherUserLabel = conv.doctor.full_name;
          }
 
-         var lastMessageText = conv.last_message
-           ? conv.last_message.text
-           : "Sin mensajes";
+         var unread = conv.unread_count || 0;
+
+         var lastMessageText = formatLastMessagePreview(conv.last_message);
 
          var item = document.createElement("div");
-         item.className = "aware-chat-item";
+         item.className = "aware-chat-item" + (unread > 0 ? " unread" : "");
 
          var lastDate = conv.last_message
            ? formatInboxDate(conv.last_message.created_at)
            : "";
 
-         var unread = conv.unread_count || 0;
-
-        item.innerHTML = `
+         item.innerHTML = `
         <div class="aware-chat-item-row">
           <strong>${otherUserLabel}</strong>
           <div class="inbox-meta">
@@ -439,9 +462,7 @@ var ChatWidget = (function () {
           otherUserLabel = conv.doctor.full_name;
         }
 
-        var lastMessageText = conv.last_message
-          ? conv.last_message.text
-          : "Sin mensajes";
+        var lastMessageText = formatLastMessagePreview(conv.last_message);
 
         var lastDate = conv.last_message
           ? formatInboxDate(conv.last_message.created_at)
@@ -450,7 +471,8 @@ var ChatWidget = (function () {
         var unread = conv.unread_count || 0;
 
         var item = document.createElement("div");
-        item.className = "aware-chat-item";
+        item.className = "aware-chat-item" + (unread > 0 ? " unread" : "");
+        
         item.setAttribute("data-conversation-id", conv.id);
 
         item.innerHTML = `

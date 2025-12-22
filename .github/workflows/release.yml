@@ -1,0 +1,43 @@
+name: Build & Release Chat Widget
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout del código
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 3️⃣ Instalar dependencias
+      - name: Install dependencies
+        run: npm ci
+
+      # 4️⃣ Build
+      - name: Build widget
+        run: npm run build
+
+      # 5️⃣ Crear Release y subir archivos
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/chat-widget.js
+            dist/chat-widget.min.js
+            dist/chat-widget.css
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
