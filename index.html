@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://github.com/luis-byt/chat-widget/releases/download/v1.0.0/chat-widget.css">
+</head>
+<body>
+
+<script src="https://github.com/luis-byt/chat-widget/releases/download/v1.0.0/chat-widget.umd.js"></script>
+
+<script>
+  new ChatWidget({
+    token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY4NjQwNTk3LCJpYXQiOjE3NjYwNDg1OTcsImp0aSI6ImNmYjBiMWIwYjVhNzQ4ZWNiOGRlN2E1MTliMmYwMDkyIiwidXNlcl9pZCI6NDl9.6ny6fS-q5qIjRjIpPP1o8vuk6rVbEGx_SwJOH7uBUBc",
+    currentUserId: 1,
+    isDoctor: false,
+    apiBaseUrl: "http://localhost:8000/chat/v1",
+    wsBaseUrl: "ws://localhost:8000"
+  }).mount()
+</script>
+
+</body>
+</html>
+

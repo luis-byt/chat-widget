@@ -4,13 +4,8 @@ import commonjs from "@rollup/plugin-commonjs"
 export default {
   input: "src/index.js",
   output: {
-    file: "dist/chat-widget.umd.js",
-    format: "umd",
-    name: "ChatWidget",
-  },
-  plugins: [
-    resolve(),
-    commonjs()
-  ]
+    file: "dist/chat-widget.js",
+    format: "iife",
+    name: "ChatWidget"
+  }
 }
-

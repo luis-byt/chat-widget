@@ -1,4 +1,3 @@
-function ChatWidget(options) {
 
   function ApiClient(options) {
     this.baseUrl = options.apiBaseUrl
@@ -1036,8 +1035,9 @@ function ChatWidget(options) {
     }
   }
 
-  global.ChatWidget = ChatWidget
+  if (typeof window !== "undefined") {
+    window.ChatWidget = ChatWidget
+  }
 
-}
 
-export default ChatWidget
+  export default ChatWidget
