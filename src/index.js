@@ -203,6 +203,8 @@
     this.isSending = false
     this.totalUnread = 0
 
+    this.closeOnOutsideClick = !!this.options.closeOnOutsideClick
+
   }
 
   /* =========================
@@ -231,7 +233,10 @@
     var primary = this.options.primaryColor || "#0d6efd"
     btn.style.setProperty("--aware-primary", primary)
 
-    btn.onclick = this.toggle.bind(this)
+    btn.onclick = function (e) {
+      e.stopPropagation() // 🛑 IMPORTANTE
+      this.toggle()
+    }.bind(this)
 
     document.body.appendChild(btn)
     this.launcher = btn
@@ -245,6 +250,11 @@
     var primary = this.options.primaryColor || "#0d6efd"
     el.style.setProperty("--aware-primary", primary)
 
+    // 🛑 BLOQUEAR PROPAGACIÓN DE CLICKS INTERNOS
+    el.addEventListener("click", function (e) {
+      e.stopPropagation()
+    })
+
     document.body.appendChild(el)
     this.container = el
   }
@@ -255,6 +265,14 @@
     if (!this.state.isOpen) {
       // 🔴 CERRANDO WIDGET
       this.container.classList.add("hidden")
+
+      // ❌ remover listener
+      if (this.closeOnOutsideClick) {
+        document.removeEventListener(
+          "click",
+          this._outsideClickHandler
+        )
+      }
 
       // Reset completo (cierra WS, limpia estado y vuelve a inbox)
       this._resetWidget()
@@ -267,6 +285,18 @@
     // Siempre renderizar inbox al abrir
     this.state.view = "inbox"
     this._render()
+
+    // ✅ agregar listener
+    if (this.closeOnOutsideClick) {
+      this._outsideClickHandler =
+        this._outsideClickHandler ||
+        this._handleOutsideClick.bind(this)
+
+      document.addEventListener(
+        "click",
+        this._outsideClickHandler
+      )
+    }
   }
 
   ChatWidget.prototype.navigate = function (view, conversationId, receiver) {
@@ -292,6 +322,15 @@
     this._render()
   }
 
+  ChatWidget.prototype._handleOutsideClick = function (event) {
+    if (!this.state.isOpen) return
+  
+    if (this.container.contains(event.target)) return
+    if (this.launcher.contains(event.target)) return
+  
+    this.toggle()
+  }  
+
   /* =========================
      RENDER
   ========================= */
@@ -313,6 +352,7 @@
       this._renderConversation()
     }
   }
+  
 
   /* =========================
      VIEWS
