@@ -173,7 +173,7 @@
   white-space: nowrap;
 }
 
-.inbox-5 {
+.inbox-badge {
   background: var(--aware-primary);
   color: #fff;
   font-size: 11px;
