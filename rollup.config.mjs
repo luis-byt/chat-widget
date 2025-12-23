@@ -1,6 +1,6 @@
 import terser from "@rollup/plugin-terser"
 
-const version = "1.0.3"
+const version = "1.0.4"
 const banner = `/*!
  * LuisByt Chat Widget v${version}
  * https://github.com/luis-byt/chat-widget
