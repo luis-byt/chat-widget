@@ -260,8 +260,110 @@
 
     document.body.appendChild(el)
     this.container = el
+
+    // 👇 CREAR MODAL DE IMAGEN
+    this._createImageModal()
   }
 
+  ChatWidget.prototype._syncWidgetPosition = function () {
+    if (!this.launcher || !this.container) return
+  
+    var launcherRect = this.launcher.getBoundingClientRect()
+    var widgetWidth = this.container.offsetWidth
+    var viewportWidth = window.innerWidth
+  
+    // 🔽 Posicionar verticalmente (siempre encima del launcher)
+    this.container.style.bottom =
+      (window.innerHeight - launcherRect.top + 12) + "px"
+    this.container.style.top = "auto"
+  
+    // 🔄 Reset horizontal
+    this.container.style.left = "auto"
+    this.container.style.right = "auto"
+    this.container.style.transform = "none"
+  
+    var launcherCenter =
+      launcherRect.left + launcherRect.width / 2
+  
+    // 🟢 IZQUIERDA
+    if (launcherCenter < viewportWidth * 0.33) {
+      this.container.style.left = launcherRect.left + "px"
+      return
+    }
+  
+    // 🔵 DERECHA
+    if (launcherCenter > viewportWidth * 0.66) {
+      this.container.style.right =
+        (viewportWidth - launcherRect.right) + "px"
+      return
+    }
+  
+    // 🟡 CENTRO
+    this.container.style.left = launcherCenter + "px"
+    this.container.style.transform = "translateX(-50%)"
+  }  
+
+  ChatWidget.prototype._createImageModal = function () {
+    var modal = document.createElement("div")
+    modal.className = "aware-image-modal hidden"
+  
+    modal.innerHTML = `
+      <div class="aware-image-modal-backdrop"></div>
+      <div class="aware-image-modal-content">
+        <img src="" alt="Preview" />
+        <button class="aware-image-modal-close">✕</button>
+      </div>
+    `
+  
+    document.body.appendChild(modal)
+    this.imageModal = modal
+  
+    var self = this
+  
+    modal.querySelector(".aware-image-modal-backdrop").onclick = function (e) {
+      e.stopPropagation()
+      self._closeImageModal()
+    }
+    
+    modal.querySelector(".aware-image-modal-content").onclick = function (e) {
+      e.stopPropagation()
+    }
+    
+    modal.querySelector(".aware-image-modal-close").onclick = function (e) {
+      e.stopPropagation()
+      self._closeImageModal()
+    }    
+  
+    // ⌨️ ESC
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        e.stopPropagation()
+        self._closeImageModal()
+      }
+    })
+  }
+
+  ChatWidget.prototype._openImageModal = function (src) {
+    if (!this.imageModal) return
+  
+    var img = this.imageModal.querySelector("img")
+    img.src = src
+  
+    // Evitar que el click que abrió la imagen cierre el widget
+    setTimeout(() => {
+      this.imageModal.classList.remove("hidden")
+    }, 0)
+  }
+  
+  ChatWidget.prototype._closeImageModal = function () {
+    if (!this.imageModal) return
+  
+    var img = this.imageModal.querySelector("img")
+    img.src = ""
+  
+    this.imageModal.classList.add("hidden")
+  }
+  
   ChatWidget.prototype.toggle = function () {
     this.state.isOpen = !this.state.isOpen
 
@@ -284,6 +386,9 @@
 
     // 🟢 ABRIENDO WIDGET
     this.container.classList.remove("hidden")
+
+    // 🔥 AQUÍ SE CALCULA LA POSICIÓN
+    this._syncWidgetPosition()
 
     // Siempre renderizar inbox al abrir
     this.state.view = "inbox"
@@ -749,6 +854,13 @@
         }
       })
 
+      this.container.onclick = function (e) {
+        var img = e.target.closest("[data-image-preview]")
+        if (!img) return
+      
+        self._openImageModal(img.src)
+      }
+
     }
 
   ChatWidget.prototype._handleWsEvent = function (data) {
@@ -854,7 +966,7 @@
       msg.attachments.forEach(function (att) {
         if (att.file_type.startsWith("image")) {
           html += `
-            <img src="${att.file}" class="chat-image" />
+            <img src="${att.file}" class="chat-image" data-image-preview />
           `
         } else {
           var fileName = att.file.split("/").pop()
