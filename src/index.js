@@ -167,7 +167,6 @@
     return "Mensaje"
   }
   
-
   function ChatWidget(options) {
     this.options = options || {}
 
@@ -460,7 +459,6 @@
       this._renderConversation()
     }
   }
-  
 
   /* =========================
      VIEWS
@@ -695,173 +693,173 @@
   }
 
   ChatWidget.prototype._renderConversation = function () {
-      var self = this
+    var self = this
 
-      this.container.innerHTML = `
-        <div class="aware-chat-header">
-          <div class="aware-chat-header-top">
-            <button class="aware-btn" id="back">←</button>
-            <strong>${this.state.conversation.receiver}</strong>
-            <div class="aware-chat-header-status">
-              <span
-                class="presence-dot offline"
-                id="presence-dot"
-              ></span>
-              <span id="presence-text">Desconectado</span>
-            </div>
+    this.container.innerHTML = `
+      <div class="aware-chat-header">
+        <div class="aware-chat-header-top">
+          <button class="aware-btn" id="back">←</button>
+          <strong>${this.state.conversation.receiver}</strong>
+          <div class="aware-chat-header-status">
+            <span
+              class="presence-dot offline"
+              id="presence-dot"
+            ></span>
+            <span id="presence-text">Desconectado</span>
           </div>
-
-          <div
-            class="aware-chat-header-typing"
-            id="typing-indicator"
-            style="display:none;"
-          >
-            Escribiendo…
-          </div>
-        </div>
-
-        <div class="aware-chat-body" id="chat-body">
-          Cargando mensajes...
         </div>
 
         <div
-          class="aware-attachments-preview"
-          id="attachments-preview"
-        ></div>
-
-        <div class="aware-chat-input">
-          <input
-            type="text"
-            id="chat-input"
-            placeholder="Escribe un mensaje…"
-          />
-          <button class="aware-attach-btn" id="attach-btn">📎</button>
-          <input type="file" id="file-input" multiple style="display:none;" />
-          <button class="aware-send-btn" id="send-btn" title="Enviar">
-            ➤
-          </button>
+          class="aware-chat-header-typing"
+          id="typing-indicator"
+          style="display:none;"
+        >
+          Escribiendo…
         </div>
-      `
+      </div>
 
-      var body = this.container.querySelector("#chat-body")
-      var attachBtn = this.container.querySelector("#attach-btn")
-      var fileInput = this.container.querySelector("#file-input")
-      var input = this.container.querySelector("#chat-input")
-      var sendBtn = this.container.querySelector("#send-btn")
+      <div class="aware-chat-body" id="chat-body">
+        Cargando mensajes...
+      </div>
 
-      attachBtn.onclick = function () {
-        fileInput.click()
-      }
+      <div
+        class="aware-attachments-preview"
+        id="attachments-preview"
+      ></div>
 
-      fileInput.onchange = function () {
-        var files = Array.from(fileInput.files)
+      <div class="aware-chat-input">
+        <input
+          type="text"
+          id="chat-input"
+          placeholder="Escribe un mensaje…"
+        />
+        <button class="aware-attach-btn" id="attach-btn">📎</button>
+        <input type="file" id="file-input" multiple style="display:none;" />
+        <button class="aware-send-btn" id="send-btn" title="Enviar">
+          ➤
+        </button>
+      </div>
+    `
 
-        files.forEach(function (file) {
-          self.pendingAttachments.push(file)
-        })
+    var body = this.container.querySelector("#chat-body")
+    var attachBtn = this.container.querySelector("#attach-btn")
+    var fileInput = this.container.querySelector("#file-input")
+    var input = this.container.querySelector("#chat-input")
+    var sendBtn = this.container.querySelector("#send-btn")
 
-        self._renderAttachmentPreviews()
+    attachBtn.onclick = function () {
+      fileInput.click()
+    }
 
-        // 👇 MUY IMPORTANTE
-        fileInput.value = ""
-      }
+    fileInput.onchange = function () {
+      var files = Array.from(fileInput.files)
 
-      /* =========================
-         Cargar mensajes (REST)
-      ========================= */
+      files.forEach(function (file) {
+        self.pendingAttachments.push(file)
+      })
 
-      this.api.getMessages(this.state.conversation.id)
-        .then(function (data) {
-          body.innerHTML = ""
+      self._renderAttachmentPreviews()
 
-          var messages = Object.values(data)
+      // 👇 MUY IMPORTANTE
+      fileInput.value = ""
+    }
 
-          if (!messages.length) {
-            body.innerHTML = "<p>No hay mensajes</p>"
-            return
-          }
+    /* =========================
+        Cargar mensajes (REST)
+    ========================= */
 
-          messages.forEach(function (msg) {
-            self._appendMessage(msg)
-          })
+    this.api.getMessages(this.state.conversation.id)
+      .then(function (data) {
+        body.innerHTML = ""
 
-          body.scrollTop = body.scrollHeight
-        })
-        .catch(function (err) {
-          body.innerHTML = "<p>Error cargando mensajes</p>"
-          console.error(err)
-        })
+        var messages = Object.values(data)
 
-      function sendMessage() {
-        self.ws.send({ type: "typing", is_typing: false })
-
-        if (self.isSending) return
-
-        var text = input.value.trim()
-
-        // ❌ No permitir enviar si no hay nada
-        if (!text && self.pendingAttachments.length === 0) {
+        if (!messages.length) {
+          body.innerHTML = '<p class="no-messages">No hay mensajes</p>'
           return
         }
 
-        self.isSending = true
-        self.pendingText = text
-
-        self.ws.send({
-          type: "message",
-          text: text
+        messages.forEach(function (msg) {
+          self._appendMessage(msg)
         })
 
-        input.value = ""
-      }
-
-      sendBtn.onclick = sendMessage
-      input.onkeydown = function (e) {
-        if (e.key === "Enter") {
-          sendMessage()
-        }
-      }
-
-      var typingTimeout = null
-
-      input.oninput = function () {
-        self.ws.send({ type: "typing", is_typing: true })
-
-        clearTimeout(typingTimeout)
-        typingTimeout = setTimeout(function () {
-          self.ws.send({ type: "typing", is_typing: false })
-        }, 1000)
-      }
-
-      /* =========================
-         Back
-      ========================= */
-
-      this.container.querySelector("#back").onclick = function () {
-        self.ws.disconnect()
-        self.navigate("inbox")
-      }
-
-      self.ws.disconnect()
-
-      self.ws.connect(this.state.conversation.id, {
-        onOpen: function () {
-          self.ws.send({ type: "read" })
-        },
-
-        onMessage: function (data) {
-          self._handleWsEvent(data)
-        }
+        body.scrollTop = body.scrollHeight
+      })
+      .catch(function (err) {
+        body.innerHTML = "<p>Error cargando mensajes</p>"
+        console.error(err)
       })
 
-      this.container.onclick = function (e) {
-        var img = e.target.closest("[data-image-preview]")
-        if (!img) return
-      
-        self._openImageModal(img.src)
+    function sendMessage() {
+      self.ws.send({ type: "typing", is_typing: false })
+
+      if (self.isSending) return
+
+      var text = input.value.trim()
+
+      // ❌ No permitir enviar si no hay nada
+      if (!text && self.pendingAttachments.length === 0) {
+        return
       }
 
+      self.isSending = true
+      self.pendingText = text
+
+      self.ws.send({
+        type: "message",
+        text: text
+      })
+
+      input.value = ""
     }
+
+    sendBtn.onclick = sendMessage
+    input.onkeydown = function (e) {
+      if (e.key === "Enter") {
+        sendMessage()
+      }
+    }
+
+    var typingTimeout = null
+
+    input.oninput = function () {
+      self.ws.send({ type: "typing", is_typing: true })
+
+      clearTimeout(typingTimeout)
+      typingTimeout = setTimeout(function () {
+        self.ws.send({ type: "typing", is_typing: false })
+      }, 1000)
+    }
+
+    /* =========================
+        Back
+    ========================= */
+
+    this.container.querySelector("#back").onclick = function () {
+      self.ws.disconnect()
+      self.navigate("inbox")
+    }
+
+    self.ws.disconnect()
+
+    self.ws.connect(this.state.conversation.id, {
+      onOpen: function () {
+        self.ws.send({ type: "read" })
+      },
+
+      onMessage: function (data) {
+        self._handleWsEvent(data)
+      }
+    })
+
+    this.container.onclick = function (e) {
+      var img = e.target.closest("[data-image-preview]")
+      if (!img) return
+    
+      self._openImageModal(img.src)
+    }
+
+  }
 
   ChatWidget.prototype._handleWsEvent = function (data) {
     if (data.type === "message") {
@@ -937,6 +935,12 @@
   ChatWidget.prototype._appendMessage = function (msg) {
     var body = this.container.querySelector("#chat-body")
     if (!body) return
+
+    // ✅ ELIMINAR TEXTO "No hay mensajes" SI EXISTE
+    var emptyPlaceholder = body.querySelector(".no-messages")
+    if (emptyPlaceholder) {
+      emptyPlaceholder.remove()
+    }
 
     var hasOnlyImage =
     msg.attachments &&

@@ -237,6 +237,14 @@
   justify-content: center;
 }
 
+.no-messages {
+  text-align: center;
+  color: #6c757d;
+  font-size: 13px;
+  margin-top: 20px;
+}
+
+
 .aware-message {
   padding: 8px 12px;
   border-radius: 12px;
