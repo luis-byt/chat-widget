@@ -246,6 +246,7 @@
 
 
 .aware-message {
+  position: relative;
   padding: 8px 12px;
   border-radius: 12px;
   margin-bottom: 6px;
@@ -270,9 +271,29 @@
   }
 }
 
+/* Oculto por defecto */
 .message-actions {
-  display: flex;
-  justify-content: flex-end;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+
+/* Mostrar SOLO al hover del mensaje */
+.aware-message:hover .message-actions {
+  display: block;
+  opacity: 1;
+}
+
+.aware-message.mine .message-actions {
+  left: -26px; /* fuera del globo */
+}
+
+.aware-message.other .message-actions {
+  right: -26px; /* fuera del globo */
 }
 
 .reaction-btn {
@@ -284,17 +305,32 @@
 }
 
 .reaction-menu {
+  position: absolute;
+  bottom: 100%;       /* encima del mensaje */
+  margin-bottom: 8px;
   display: flex;
   gap: 6px;
-  background: #fff;
   padding: 6px 8px;
+  background: #fff;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.15);
-  margin-top: 4px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.2);
+  z-index: 20;
 }
 
 .reaction-menu.hidden {
   display: none;
+}
+
+.reaction-menu span {
+  cursor: pointer;
+}
+
+.aware-message.mine .reaction-menu {
+  left: 0;
+}
+
+.aware-message.other .reaction-menu {
+  right: 0;
 }
 
 .chat-image {
