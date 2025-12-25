@@ -1,5 +1,5 @@
 /*!
- * LuisByt Chat Widget v1.0.7
+ * LuisByt Chat Widget v1.0.8
  * https://github.com/luis-byt/chat-widget
  * © 2025 Byt
  * MIT License
