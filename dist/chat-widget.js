@@ -1,5 +1,5 @@
 /*!
- * LuisByt Chat Widget v1.0.6
+ * LuisByt Chat Widget v1.0.7
  * https://github.com/luis-byt/chat-widget
  * © 2025 Byt
  * MIT License
@@ -178,6 +178,10 @@ var ChatWidget = (function () {
 
     function ChatWidget(options) {
       this.options = options || {};
+
+      this.closeOnOutsideClick = !!this.options.closeOnOutsideClick;
+      this.options.position = options.position || "bottom-right";
+
       this.api = new ApiClient(options);
       this.ws = new WebSocketClient(options);
 
@@ -211,8 +215,6 @@ var ChatWidget = (function () {
       this.isSending = false;
       this.totalUnread = 0;
 
-      this.closeOnOutsideClick = !!this.options.closeOnOutsideClick;
-
     }
 
     /* =========================
@@ -231,7 +233,7 @@ var ChatWidget = (function () {
 
     ChatWidget.prototype._createLauncher = function () {
       var btn = document.createElement("div");
-      btn.className = "aware-chat-launcher";
+      btn.className = "aware-chat-launcher position-" + this.options.position;
       btn.innerHTML = `
       <i class="${this.options.logo}"></i>
       <span class="launcher-badge hidden" id="launcher-badge"></span>
@@ -252,7 +254,8 @@ var ChatWidget = (function () {
 
     ChatWidget.prototype._createWidget = function () {
       var el = document.createElement("div");
-      el.className = "aware-chat-widget hidden";
+      el.className =
+        "aware-chat-widget hidden position-" + this.options.position;
 
       // 🎨 Color primario configurable
       var primary = this.options.primaryColor || "#0d6efd";
@@ -539,8 +542,10 @@ var ChatWidget = (function () {
 
       this.container.innerHTML = `
       <div class="aware-chat-header">
-        <button class="aware-btn" id="back">←</button>
-        <strong>Nueva conversación</strong>
+        <div class="aware-chat-header-top">
+          <button class="aware-btn" id="back">←</button>
+          <strong>Nueva conversación</strong>
+        </div>
       </div>
 
       <div class="aware-chat-body" id="contacts-body">

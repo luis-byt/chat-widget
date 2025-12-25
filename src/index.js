@@ -170,6 +170,10 @@
 
   function ChatWidget(options) {
     this.options = options || {}
+
+    this.closeOnOutsideClick = !!this.options.closeOnOutsideClick
+    this.options.position = options.position || "bottom-right"
+
     this.api = new ApiClient(options)
     this.ws = new WebSocketClient(options)
 
@@ -203,8 +207,6 @@
     this.isSending = false
     this.totalUnread = 0
 
-    this.closeOnOutsideClick = !!this.options.closeOnOutsideClick
-
   }
 
   /* =========================
@@ -223,7 +225,7 @@
 
   ChatWidget.prototype._createLauncher = function () {
     var btn = document.createElement("div")
-    btn.className = "aware-chat-launcher"
+    btn.className = "aware-chat-launcher position-" + this.options.position
     btn.innerHTML = `
       <i class="${this.options.logo}"></i>
       <span class="launcher-badge hidden" id="launcher-badge"></span>
@@ -244,7 +246,8 @@
 
   ChatWidget.prototype._createWidget = function () {
     var el = document.createElement("div")
-    el.className = "aware-chat-widget hidden"
+    el.className =
+      "aware-chat-widget hidden position-" + this.options.position
 
     // 🎨 Color primario configurable
     var primary = this.options.primaryColor || "#0d6efd"
@@ -531,8 +534,10 @@
 
     this.container.innerHTML = `
       <div class="aware-chat-header">
-        <button class="aware-btn" id="back">←</button>
-        <strong>Nueva conversación</strong>
+        <div class="aware-chat-header-top">
+          <button class="aware-btn" id="back">←</button>
+          <strong>Nueva conversación</strong>
+        </div>
       </div>
 
       <div class="aware-chat-body" id="contacts-body">
@@ -1094,6 +1099,5 @@
   if (typeof window !== "undefined") {
     window.ChatWidget = ChatWidget
   }
-
 
   export default ChatWidget
