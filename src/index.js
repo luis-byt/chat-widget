@@ -44,6 +44,12 @@
     )
   }
 
+  ApiClient.prototype.getMessage = function (messageId) {
+    return this.request(
+      this.endpoints.message(messageId)
+    )
+  }
+  
   ApiClient.prototype.uploadAttachment = function (messageId, file) {
     var form = new FormData()
     form.append("file", file)
@@ -900,6 +906,12 @@
     if (data.type === "attachment") {
       this._appendAttachment(data.message_id, data.attachment)
     }
+
+    if (data.type === "reaction") {
+      this._refreshMessageReactions(data.message_id)
+    }
+    
+    
   }
 
   ChatWidget.prototype._handleOwnMessageCreated = function (msg) {
@@ -965,6 +977,21 @@
       </div>
     `
 
+    html += `
+      <div class="message-actions">
+        <button class="reaction-btn" title="Reaccionar">😊</button>
+      </div>
+
+      <div class="reaction-menu hidden">
+        <span>👍</span>
+        <span>❤️</span>
+        <span>😂</span>
+        <span>😮</span>
+        <span>😢</span>
+        <span>🙏🏻</span>
+      </div>
+    `
+
     // 👇 AGREGAR ADJUNTOS SI EXISTEN
     if (msg.attachments && msg.attachments.length) {
       msg.attachments.forEach(function (att) {
@@ -997,8 +1024,43 @@
       })
     }
 
+    if (msg.reactions && msg.reactions.length) {
+      html += `<div class="message-reactions">`
+    
+      msg.reactions.forEach(r => {
+        html += `
+          <span class="reaction">
+            ${r.reaction} ${r.count}
+          </span>
+        `
+      })
+    
+      html += `</div>`
+    }    
+
     div.innerHTML = html
     body.appendChild(div)
+
+    var reactionBtn = div.querySelector(".reaction-btn")
+    var menu = div.querySelector(".reaction-menu")
+
+    reactionBtn.onclick = function (e) {
+      e.stopPropagation()
+      menu.classList.toggle("hidden")
+    }
+
+    menu.querySelectorAll("span").forEach(span => {
+      span.onclick = () => {
+        this.ws.send({
+          type: "reaction",
+          message_id: msg.id,
+          reaction: span.innerText
+        })
+
+        menu.classList.add("hidden")
+      }
+    })
+
     body.scrollTop = body.scrollHeight
   }
 
@@ -1072,6 +1134,45 @@
       container.appendChild(div)
     })
   }
+
+  ChatWidget.prototype._refreshMessageReactions = function (messageId) {
+    var self = this
+  
+    this.api.getMessage(messageId)
+      .then(function (msg) {
+        var messageEl = self.container.querySelector(
+          '[data-message-id="' + messageId + '"]'
+        )
+  
+        if (!messageEl) return
+  
+        // 🔥 eliminar reacciones actuales
+        var oldReactions = messageEl.querySelector(".message-reactions")
+        if (oldReactions) {
+          oldReactions.remove()
+        }
+  
+        // 🔥 si no hay reacciones → nada que mostrar
+        if (!msg.reactions || !msg.reactions.length) return
+  
+        // 🔥 crear contenedor nuevo
+        var reactionsDiv = document.createElement("div")
+        reactionsDiv.className = "message-reactions"
+  
+        msg.reactions.forEach(function (r) {
+          var span = document.createElement("span")
+          span.className = "reaction"
+          span.innerText = r.reaction + " " + r.count
+          reactionsDiv.appendChild(span)
+        })
+  
+        // 🔥 insertar debajo del mensaje
+        messageEl.appendChild(reactionsDiv)
+      })
+      .catch(function (err) {
+        console.error("Error refrescando reacciones", err)
+      })
+  }  
 
   ChatWidget.prototype._handleTyping = function (data) {
     // No mostrar typing propio
