@@ -221,6 +221,7 @@
   ChatWidget.prototype.mount = function () {
     this._createLauncher()
     this._createWidget()
+    this._initGlobalReactionClose()
     this._render()
   }
 
@@ -471,119 +472,120 @@
   ========================= */
 
   ChatWidget.prototype._renderInbox = function () {
-   var self = this
-   var body = document.createElement("div")
-   body.className = "aware-chat-body"
-   body.innerHTML = "Cargando conversaciones..."
+    var self = this
+    var body = document.createElement("div")
+    body.className = "aware-chat-body"
+    body.innerHTML = "Cargando conversaciones..."
 
-   this.container.innerHTML = `
-     <div class="aware-chat-header">
+    this.container.innerHTML = `
+      <div class="aware-chat-header">
         <div class="aware-chat-header-top">
-          <strong>Mensajes</strong>
+          <strong>Conversaciones</strong>
           <button class="aware-btn" id="new-chat">＋</button>
         </div>
 
-
+        <div class="aware-chat-search">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            id="inbox-search"
+            placeholder="Buscar una conversación..."
+          />
+        </div>
      </div>
    `
-    /*<div class="aware-chat-search">
-      <input
-        type="text"
-        id="inbox-search"
-        placeholder="Buscar conversaciones…"
-      />
-    </div>*/
-   this.container.appendChild(body)
 
-   this.api.getInbox().then(function (conversations) {
-     self.state.inbox.conversations = conversations
+    this.container.appendChild(body)
 
-     self._renderInboxList(conversations)
-     // 🔔 Calcular total de no leídos
-     self._updateTotalUnread(conversations)
+    this.api.getInbox().then(function (conversations) {
+      self.state.inbox.conversations = conversations
 
-     body.innerHTML = ""
+      self._renderInboxList(conversations)
+      // 🔔 Calcular total de no leídos
+      self._updateTotalUnread(conversations)
 
-     if (!conversations.length) {
-       body.innerHTML = "<p>No hay conversaciones</p>"
-       return
-     }
+      body.innerHTML = ""
 
-     conversations.forEach(function (conv) {
-       // 👉 determinar el otro usuario
-       var otherUserLabel = ""
-       if (conv.doctor.id === self.options.currentUserId) {
-         otherUserLabel = conv.patient.full_name
-       } else {
-         otherUserLabel = conv.doctor.full_name
-       }
+      if (!conversations.length) {
+        body.innerHTML = "<p>No hay conversaciones</p>"
+        return
+      }
 
-       var unread = conv.unread_count || 0
+      conversations.forEach(function (conv) {
+        // 👉 determinar el otro usuario
+        var otherUserLabel = ""
+        if (conv.doctor.id === self.options.currentUserId) {
+          otherUserLabel = conv.patient.full_name
+        } else {
+          otherUserLabel = conv.doctor.full_name
+        }
 
-       var lastMessageText = formatLastMessagePreview(conv.last_message)
+        var unread = conv.unread_count || 0
 
-       var item = document.createElement("div")
-       item.className = "aware-chat-item" + (unread > 0 ? " unread" : "")
+        var lastMessageText = formatLastMessagePreview(conv.last_message)
 
-       var lastDate = conv.last_message
-         ? formatInboxDate(conv.last_message.created_at)
-         : ""
+        var item = document.createElement("div")
+        item.className = "aware-chat-item" + (unread > 0 ? " unread" : "")
 
-       item.innerHTML = `
-        <div class="aware-chat-item-row">
-          <strong>${otherUserLabel}</strong>
-          <div class="inbox-meta">
-            <span class="inbox-date">${lastDate}</span>
-            ${
-              unread > 0
-                ? `<span class="inbox-badge">${unread}</span>`
-                : ""
-            }
+        var lastDate = conv.last_message
+          ? formatInboxDate(conv.last_message.created_at)
+          : ""
+
+        item.innerHTML = `
+          <div class="aware-chat-item-row">
+            <strong>${otherUserLabel}</strong>
+            <div class="inbox-meta">
+              <span class="inbox-date">${lastDate}</span>
+              ${
+                unread > 0
+                  ? `<span class="inbox-badge">${unread}</span>`
+                  : ""
+              }
+            </div>
           </div>
-        </div>
-        <div class="last-message">${lastMessageText}</div>
-      `
+          <div class="last-message">${lastMessageText}</div>
+        `
 
-       item.onclick = function () {
-         self.navigate("conversation", conv.id, otherUserLabel)
-       }
+        item.onclick = function () {
+          self.navigate("conversation", conv.id, otherUserLabel)
+        }
 
-       body.appendChild(item)
-     })
-   }).catch(function (err) {
-     body.innerHTML = "<p>Error cargando inbox</p>"
-     console.error(err)
-   })
+        body.appendChild(item)
+      })
+    }).catch(function (err) {
+      body.innerHTML = "<p>Error cargando inbox</p>"
+      console.error(err)
+    })
 
-   this.container.querySelector("#new-chat").onclick = function () {
-     self.navigate("new")
-   }
+    this.container.querySelector("#new-chat").onclick = function () {
+      self.navigate("new")
+    }
 
-//   var searchInput = this.container.querySelector("#inbox-search")
+    var searchInput = this.container.querySelector("#inbox-search")
 
-//   searchInput.oninput = function () {
-//     var query = searchInput.value.toLowerCase().trim()
-//
-//     var filtered = self.state.inbox.conversations.filter(function (conv) {
-//       var name =
-//         conv.doctor.id === self.options.currentUserId
-//           ? conv.patient.full_name
-//           : conv.doctor.full_name
-//
-//       var lastText = conv.last_message
-//         ? conv.last_message.text
-//         : ""
-//
-//       return (
-//         name.toLowerCase().includes(query) ||
-//         lastText.toLowerCase().includes(query)
-//       )
-//     })
-//
-//     self._renderInboxList(filtered)
-//   }
+    searchInput.oninput = function () {
+      var query = searchInput.value.toLowerCase().trim()
 
- }
+      var filtered = self.state.inbox.conversations.filter(function (conv) {
+        var name =
+          conv.doctor.id === self.options.currentUserId
+            ? conv.patient.full_name
+            : conv.doctor.full_name
+
+        var lastText = conv.last_message
+          ? conv.last_message.text
+          : ""
+
+        return (
+          name.toLowerCase().includes(query) ||
+            lastText.toLowerCase().includes(query)
+        )
+      })
+
+      self._renderInboxList(filtered)
+    }
+
+  }
 
   ChatWidget.prototype._renderInboxList = function (conversations) {
     var body = this.container.querySelector(".aware-chat-body")
@@ -640,63 +642,90 @@
 
   ChatWidget.prototype._renderNewConversation = function () {
     var self = this
-
+  
     this.container.innerHTML = `
       <div class="aware-chat-header">
         <div class="aware-chat-header-top">
           <button class="aware-btn" id="back">←</button>
           <strong>Nueva conversación</strong>
         </div>
+  
+        <div class="aware-chat-search">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            id="contacts-search"
+            placeholder="Buscar contacto e inicia una conversación"
+          />
+        </div>
       </div>
-
+  
       <div class="aware-chat-body" id="contacts-body">
         Cargando contactos...
       </div>
     `
-
+  
     var body = this.container.querySelector("#contacts-body")
-
+  
     this.api.getContacts()
       .then(function (contacts) {
-        body.innerHTML = ""
-
-        if (!contacts.length) {
-          body.innerHTML = "<p>No hay contactos disponibles</p>"
-          return
+        self.state.contacts.list = contacts
+  
+        // ✅ USAR self, NO this
+        var searchInput = self.container.querySelector("#contacts-search")
+  
+        searchInput.oninput = function () {
+          var query = searchInput.value.toLowerCase().trim()
+  
+          var filtered = self.state.contacts.list.filter(function (contact) {
+            return contact.name.toLowerCase().includes(query)
+          })
+  
+          renderContacts(filtered)
         }
-
-        contacts.forEach(function (contact) {
-          var item = document.createElement("div")
-          item.className = "aware-chat-item"
-
-          item.innerHTML = `
-            <strong>${contact.name}</strong>
-            <div class="last-message">
-              ${contact.role === "doctor" ? "Doctor" : "Paciente"}
-            </div>
-          `
-          item.onclick = function () {
-            self.api.createConversation(contact.id, contact.role)
-              .then(function (conv) {
-                self.navigate("conversation", conv.id)
-              })
-              .catch(function (err) {
-                console.error("Error creando conversación", err)
-              })
+  
+        function renderContacts(list) {
+          body.innerHTML = ""
+  
+          if (!list.length) {
+            body.innerHTML = "<p>No hay contactos disponibles</p>"
+            return
           }
-
-          body.appendChild(item)
-        })
+  
+          list.forEach(function (contact) {
+            var item = document.createElement("div")
+            item.className = "aware-chat-item"
+  
+            item.innerHTML = `
+              <strong>${contact.name}</strong>
+              <div class="last-message">
+                ${contact.role === "doctor" ? "Doctor" : "Paciente"}
+              </div>
+            `
+  
+            item.onclick = function () {
+              self.api.createConversation(contact.id, contact.role)
+                .then(function (conv) {
+                  self.navigate("conversation", conv.id)
+                })
+                .catch(console.error)
+            }
+  
+            body.appendChild(item)
+          })
+        }
+  
+        renderContacts(contacts)
       })
       .catch(function (err) {
         body.innerHTML = "<p>Error cargando contactos</p>"
         console.error(err)
       })
-
+  
     this.container.querySelector("#back").onclick = function () {
       self.navigate("inbox")
     }
-  }
+  }  
 
   ChatWidget.prototype._renderConversation = function () {
     var self = this
@@ -911,7 +940,6 @@
       this._refreshMessageReactions(data.message_id)
     }
     
-    
   }
 
   ChatWidget.prototype._handleOwnMessageCreated = function (msg) {
@@ -947,28 +975,43 @@
   ChatWidget.prototype._appendMessage = function (msg) {
     var body = this.container.querySelector("#chat-body")
     if (!body) return
-
-    // ✅ ELIMINAR TEXTO "No hay mensajes" SI EXISTE
+  
+    // ✅ eliminar placeholder "No hay mensajes"
     var emptyPlaceholder = body.querySelector(".no-messages")
-    if (emptyPlaceholder) {
-      emptyPlaceholder.remove()
-    }
-
-    var hasOnlyImage =
-    msg.attachments &&
-    msg.attachments.length === 1 &&
-    msg.attachments[0].file_type.startsWith("image") &&
-    !msg.text
-
-
+    if (emptyPlaceholder) emptyPlaceholder.remove()
+  
     var isMine = msg.sender === this.options.currentUserId
-
-    var div = document.createElement("div")
-    div.className =
-      "aware-message " + (isMine ? "mine" : "other") + (hasOnlyImage ? " image-only" : "")
-
-    div.setAttribute("data-message-id", msg.id)
-
+  
+    var hasOnlyImage =
+      msg.attachments &&
+      msg.attachments.length === 1 &&
+      msg.attachments[0].file_type.startsWith("image") &&
+      !msg.text
+  
+    /* =========================
+       CONTENEDOR PADRE (ROW)
+    ========================= */
+    var row = document.createElement("div")
+    row.className = "message-row " + (isMine ? "mine" : "other")
+  
+    /* =========================
+       BOTÓN DE REACCIÓN
+    ========================= */
+    var actions = document.createElement("div")
+    actions.className = "message-actions"
+    actions.innerHTML = `<button class="reaction-btn" title="Reaccionar">😊</button>`
+  
+    /* =========================
+       GLOBO DEL MENSAJE
+    ========================= */
+    var bubble = document.createElement("div")
+    bubble.className =
+      "aware-message " +
+      (isMine ? "mine" : "other") +
+      (hasOnlyImage ? " image-only" : "")
+  
+    bubble.setAttribute("data-message-id", msg.id)
+  
     var html = `
       <div class="message-text">${msg.text || ""}</div>
       <div class="message-meta">
@@ -976,32 +1019,14 @@
         ${isMine ? '<span class="message-status">✓</span>' : ""}
       </div>
     `
-
-    html += `
-      <div class="message-actions">
-        <button class="reaction-btn" title="Reaccionar">😊</button>
-      </div>
-
-      <div class="reaction-menu hidden">
-        <span>👍</span>
-        <span>❤️</span>
-        <span>😂</span>
-        <span>😮</span>
-        <span>😢</span>
-        <span>🙏🏻</span>
-      </div>
-    `
-
-    // 👇 AGREGAR ADJUNTOS SI EXISTEN
+  
+    // 📎 adjuntos
     if (msg.attachments && msg.attachments.length) {
       msg.attachments.forEach(function (att) {
         if (att.file_type.startsWith("image")) {
-          html += `
-            <img src="${att.file}" class="chat-image" data-image-preview />
-          `
+          html += `<img src="${att.file}" class="chat-image" data-image-preview />`
         } else {
           var fileName = att.file.split("/").pop()
-
           html += `
             <div class="chat-attachment chat-attachment-pdf">
               <div class="chat-attachment-icon">📄</div>
@@ -1010,11 +1035,7 @@
                 <div class="chat-attachment-meta">
                   ${(att.file_size / 1024).toFixed(0)} KB
                 </div>
-                <a
-                  href="${att.file}"
-                  target="_blank"
-                  class="chat-attachment-link"
-                >
+                <a href="${att.file}" target="_blank" class="chat-attachment-link">
                   Descargar
                 </a>
               </div>
@@ -1023,32 +1044,80 @@
         }
       })
     }
-
+  
+    // 👍 reacciones existentes
     if (msg.reactions && msg.reactions.length) {
       html += `<div class="message-reactions">`
-    
       msg.reactions.forEach(r => {
-        html += `
-          <span class="reaction">
-            ${r.reaction} ${r.count}
-          </span>
-        `
+        html += `<span class="reaction">${r.reaction} ${r.count}</span>`
+      })
+      html += `</div>`
+    }
+  
+    bubble.innerHTML = html
+  
+    /* =========================
+       MENÚ DE REACCIONES
+    ========================= */
+    var menu = document.createElement("div")
+    menu.className = "reaction-menu hidden"
+    menu.innerHTML = `
+      <span>👍</span>
+      <span>❤️</span>
+      <span>😂</span>
+      <span>😮</span>
+      <span>😢</span>
+      <span>🙏🏻</span>
+    `
+  
+    /* =========================
+      ENSAMBLAR TODO (ORDEN CORRECTO)
+    ========================= */
+    if (isMine) {
+      // 😊 [acciones] [mensaje]
+      row.appendChild(actions)
+      row.appendChild(bubble)
+    } else {
+      // [mensaje] [acciones] 😊
+      row.appendChild(bubble)
+      row.appendChild(actions)
+    }
+
+    // el menú SIEMPRE va al final para flotar encima
+    row.appendChild(menu)
+
+    body.appendChild(row)
+
+    /* =========================
+      IMAGE PREVIEW (MODAL)
+    ========================= */
+    row.querySelectorAll("[data-image-preview]").forEach(img => {
+      img.onclick = (e) => {
+        e.stopPropagation()
+        this._openImageModal(img.src)
+      }
+    })
+
+    /* =========================
+       EVENTOS
+    ========================= */
+    var reactionBtn = actions.querySelector(".reaction-btn")
+  
+    reactionBtn.onclick = (e) => {
+      e.stopPropagation() // ⛔ evita que el document click lo cierre
+      
+      // cerrar otros menus abiertos
+      document.querySelectorAll(".reaction-menu:not(.hidden)").forEach(m => {
+        if (m !== menu) m.classList.add("hidden")
       })
     
-      html += `</div>`
-    }    
-
-    div.innerHTML = html
-    body.appendChild(div)
-
-    var reactionBtn = div.querySelector(".reaction-btn")
-    var menu = div.querySelector(".reaction-menu")
-
-    reactionBtn.onclick = function (e) {
-      e.stopPropagation()
       menu.classList.toggle("hidden")
     }
 
+    menu.onclick = (e) => {
+      e.stopPropagation()
+    }    
+  
     menu.querySelectorAll("span").forEach(span => {
       span.onclick = () => {
         this.ws.send({
@@ -1056,14 +1125,13 @@
           message_id: msg.id,
           reaction: span.innerText
         })
-
         menu.classList.add("hidden")
       }
     })
-
+  
     body.scrollTop = body.scrollHeight
   }
-
+  
   ChatWidget.prototype._appendAttachment = function (messageId, attachment) {
     var msgDiv = this.container.querySelector(
       '[data-message-id="' + messageId + '"]'
@@ -1073,7 +1141,7 @@
 
     if (attachment.file_type.startsWith("image")) {
       msgDiv.innerHTML += `
-        <img src="${attachment.file}" class="chat-image" />
+        <img src="${attachment.file}" class="chat-image" data-image-preview  />
       `
     } else {
       var fileName = attachment.file.split("/").pop()
@@ -1172,6 +1240,14 @@
       .catch(function (err) {
         console.error("Error refrescando reacciones", err)
       })
+  }
+
+  ChatWidget.prototype._initGlobalReactionClose = function () {
+    document.addEventListener("click", function () {
+      document.querySelectorAll(".reaction-menu:not(.hidden)").forEach(menu => {
+        menu.classList.add("hidden")
+      })
+    })
   }  
 
   ChatWidget.prototype._handleTyping = function (data) {
