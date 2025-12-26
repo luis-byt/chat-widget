@@ -926,7 +926,7 @@ var ChatWidget = (function () {
         }
 
         return
-      }
+      }  
 
       if (data.type === "typing") {
         this._handleTyping(data);
@@ -1259,8 +1259,6 @@ var ChatWidget = (function () {
     };  
 
     ChatWidget.prototype._handleTyping = function (data) {
-      // No mostrar typing propio
-      console.log(this.options.isDoctor);
       if (data.sender_role === (this.options.isDoctor ? "doctor" : "patient")) {
         return
       }
