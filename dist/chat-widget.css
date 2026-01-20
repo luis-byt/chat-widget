@@ -499,8 +499,8 @@
 
 .aware-chat-input input {
   flex: 1;
-  padding: 8px;
-  border-radius: 4px;
+  padding: 8px 16px;
+  border-radius: 80px;
   border: 1px solid #ccc;
   font-size: 14px;
   width: 70%;

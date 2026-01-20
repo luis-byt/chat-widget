@@ -1013,7 +1013,7 @@
     bubble.setAttribute("data-message-id", msg.id)
   
     var html = `
-      <div class="message-text">${msg.text || ""}</div>
+      <div class="message-text">${msg.text.trim() || ""}</div>
       <div class="message-meta">
         <span class="message-date">${formatDate(msg.created_at)}</span>
         ${isMine ? '<span class="message-status">✓</span>' : ""}
