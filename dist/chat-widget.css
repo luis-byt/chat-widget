@@ -356,19 +356,24 @@
 ========================= */
 
 .aware-ai-btn {
+  background: #f1f3f5;
   border: none;
-  background: #6c63ff;
-  color: white;
-  font-size: 13px;
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: 50%;
+  font-size: 13px;
   cursor: pointer;
   white-space: nowrap;
 }
 
-.aware-ai-btn:hover {
-  opacity: 0.9;
+.aware-ai-btn.active {
+  background: var(--aware-primary);
+  color: #fff;
 }
+
+#chat-input.ai-mode {
+  background: #f3e8ff;
+}
+
 
 /* =========================
    INPUT AI MODE
@@ -378,7 +383,6 @@
   background: #f3f0ff;
   border-color: #6c63ff;
 }
-
 
 /* =====================================================
    REACCIONES

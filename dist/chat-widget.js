@@ -1,5 +1,5 @@
 /*!
- * LuisByt Chat Widget v1.0.15
+ * LuisByt Chat Widget v1.0.16
  * https://github.com/luis-byt/chat-widget
  * © 2025 Byt
  * MIT License
@@ -192,6 +192,7 @@ var ChatWidget = (function () {
 
       this.state = {
         isOpen: false,
+        aiMode: false,
         view: "inbox",
 
         inbox: {
@@ -771,7 +772,7 @@ var ChatWidget = (function () {
       ></div>
 
       <div class="aware-chat-input">
-        <button class="aware-ai-btn" id="ai-btn">🤖 IA</button>
+        <button class="aware-ai-btn" id="ai-btn">🤖</button>
 
         <input
           type="text"
@@ -858,7 +859,12 @@ var ChatWidget = (function () {
           text: text
         });
 
-        input.value = "";
+        if (self.state.aiMode) {
+          input.value = "/bot ";
+          input.setSelectionRange(input.value.length, input.value.length);
+        } else {
+          input.value = "";
+        }
       }
 
       sendBtn.onclick = sendMessage;
@@ -883,14 +889,41 @@ var ChatWidget = (function () {
         }, 1000);
       };
 
-      aiBtn.onclick = function () {
-        if (!input.value.startsWith("/bot")) {
+      // 🔒 No permitir borrar "/bot "
+      input.addEventListener("keydown", function (e) {
+        if (!self.state.aiMode) return
+
+        if (
+          input.selectionStart <= 5 &&
+          (e.key === "Backspace" || e.key === "Delete")
+        ) {
+          e.preventDefault();
+        }
+      });
+
+      // 🔒 Si el usuario intenta borrar manualmente el prefijo
+      input.addEventListener("input", function () {
+        if (!self.state.aiMode) return
+
+        if (!input.value.startsWith("/bot ")) {
           input.value = "/bot ";
         }
-      
-        input.classList.add("ai-mode");
+      });
+
+      aiBtn.onclick = function () {
+        self.state.aiMode = !self.state.aiMode;
+        input.setSelectionRange(input.value.length, input.value.length);
         input.focus();
-      };    
+
+      
+        if (self.state.aiMode) {
+          aiBtn.classList.add("active");
+          self._activateAiMode();
+        } else {
+          aiBtn.classList.remove("active");
+          self._deactivateAiMode();
+        }
+      };
 
       /* =========================
           Back
@@ -921,6 +954,26 @@ var ChatWidget = (function () {
       };
 
     };
+
+    ChatWidget.prototype._activateAiMode = function () {
+      var input = this.container.querySelector("#chat-input");
+      if (!input) return
+    
+      if (!input.value.startsWith("/bot ")) {
+        input.value = "/bot " + input.value.replace(/^\/bot\s?/, "");
+      }
+    
+      input.classList.add("ai-mode");
+      input.setSelectionRange(input.value.length, input.value.length);
+    };
+    
+    ChatWidget.prototype._deactivateAiMode = function () {
+      var input = this.container.querySelector("#chat-input");
+      if (!input) return
+    
+      input.value = input.value.replace(/^\/bot\s?/, "");
+      input.classList.remove("ai-mode");
+    };  
 
     ChatWidget.prototype._handleWsEvent = function (data) {
       if (data.type === "message") {

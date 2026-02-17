@@ -184,6 +184,7 @@
 
     this.state = {
       isOpen: false,
+      aiMode: false,
       view: "inbox",
 
       inbox: {
@@ -763,7 +764,7 @@
       ></div>
 
       <div class="aware-chat-input">
-        <button class="aware-ai-btn" id="ai-btn">🤖 IA</button>
+        <button class="aware-ai-btn" id="ai-btn">🤖</button>
 
         <input
           type="text"
@@ -850,7 +851,12 @@
         text: text
       })
 
-      input.value = ""
+      if (self.state.aiMode) {
+        input.value = "/bot "
+        input.setSelectionRange(input.value.length, input.value.length)
+      } else {
+        input.value = ""
+      }
     }
 
     sendBtn.onclick = sendMessage
@@ -875,14 +881,41 @@
       }, 1000)
     }
 
-    aiBtn.onclick = function () {
-      if (!input.value.startsWith("/bot")) {
+    // 🔒 No permitir borrar "/bot "
+    input.addEventListener("keydown", function (e) {
+      if (!self.state.aiMode) return
+
+      if (
+        input.selectionStart <= 5 &&
+        (e.key === "Backspace" || e.key === "Delete")
+      ) {
+        e.preventDefault()
+      }
+    })
+
+    // 🔒 Si el usuario intenta borrar manualmente el prefijo
+    input.addEventListener("input", function () {
+      if (!self.state.aiMode) return
+
+      if (!input.value.startsWith("/bot ")) {
         input.value = "/bot "
       }
-    
-      input.classList.add("ai-mode")
+    })
+
+    aiBtn.onclick = function () {
+      self.state.aiMode = !self.state.aiMode
+      input.setSelectionRange(input.value.length, input.value.length)
       input.focus()
-    }    
+
+    
+      if (self.state.aiMode) {
+        aiBtn.classList.add("active")
+        self._activateAiMode()
+      } else {
+        aiBtn.classList.remove("active")
+        self._deactivateAiMode()
+      }
+    }
 
     /* =========================
         Back
@@ -913,6 +946,26 @@
     }
 
   }
+
+  ChatWidget.prototype._activateAiMode = function () {
+    var input = this.container.querySelector("#chat-input")
+    if (!input) return
+  
+    if (!input.value.startsWith("/bot ")) {
+      input.value = "/bot " + input.value.replace(/^\/bot\s?/, "")
+    }
+  
+    input.classList.add("ai-mode")
+    input.setSelectionRange(input.value.length, input.value.length)
+  }
+  
+  ChatWidget.prototype._deactivateAiMode = function () {
+    var input = this.container.querySelector("#chat-input")
+    if (!input) return
+  
+    input.value = input.value.replace(/^\/bot\s?/, "")
+    input.classList.remove("ai-mode")
+  }  
 
   ChatWidget.prototype._handleWsEvent = function (data) {
     if (data.type === "message") {
