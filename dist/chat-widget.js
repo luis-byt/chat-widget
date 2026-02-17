@@ -771,17 +771,21 @@ var ChatWidget = (function () {
       ></div>
 
       <div class="aware-chat-input">
+        <button class="aware-ai-btn" id="ai-btn">🤖 IA</button>
+
         <input
           type="text"
           id="chat-input"
           placeholder="Escribe un mensaje…"
         />
+
         <button class="aware-attach-btn" id="attach-btn">📎</button>
         <input type="file" id="file-input" multiple style="display:none;" />
         <button class="aware-send-btn" id="send-btn" title="Enviar">
           ➤
         </button>
       </div>
+
     `;
 
       var body = this.container.querySelector("#chat-body");
@@ -789,6 +793,7 @@ var ChatWidget = (function () {
       var fileInput = this.container.querySelector("#file-input");
       var input = this.container.querySelector("#chat-input");
       var sendBtn = this.container.querySelector("#send-btn");
+      var aiBtn = this.container.querySelector("#ai-btn");
 
       attachBtn.onclick = function () {
         fileInput.click();
@@ -866,6 +871,10 @@ var ChatWidget = (function () {
       var typingTimeout = null;
 
       input.oninput = function () {
+        if (!input.value.startsWith("/bot")) {
+          input.classList.remove("ai-mode");
+        }
+        
         self.ws.send({ type: "typing", is_typing: true });
 
         clearTimeout(typingTimeout);
@@ -873,6 +882,15 @@ var ChatWidget = (function () {
           self.ws.send({ type: "typing", is_typing: false });
         }, 1000);
       };
+
+      aiBtn.onclick = function () {
+        if (!input.value.startsWith("/bot")) {
+          input.value = "/bot ";
+        }
+      
+        input.classList.add("ai-mode");
+        input.focus();
+      };    
 
       /* =========================
           Back
@@ -989,6 +1007,7 @@ var ChatWidget = (function () {
       if (emptyPlaceholder) emptyPlaceholder.remove();
     
       var isMine = msg.sender === this.options.currentUserId;
+      var isBot = msg.sender_role === "bot";
     
       var hasOnlyImage =
         msg.attachments &&
@@ -1000,7 +1019,11 @@ var ChatWidget = (function () {
          CONTENEDOR PADRE (ROW)
       ========================= */
       var row = document.createElement("div");
-      row.className = "message-row " + (isMine ? "mine" : "other");
+      if (isBot) {
+        row.className = "message-row bot";
+      } else {
+        row.className = "message-row " + (isMine ? "mine" : "other");
+      }    
     
       /* =========================
          BOTÓN DE REACCIÓN
@@ -1013,10 +1036,16 @@ var ChatWidget = (function () {
          GLOBO DEL MENSAJE
       ========================= */
       var bubble = document.createElement("div");
-      bubble.className =
-        "aware-message " +
-        (isMine ? "mine" : "other") +
-        (hasOnlyImage ? " image-only" : "");
+      if (isBot) {
+        bubble.className =
+          "aware-message bot" +
+          (hasOnlyImage ? " image-only" : "");
+      } else {
+        bubble.className =
+          "aware-message " +
+          (isMine ? "mine" : "other") +
+          (hasOnlyImage ? " image-only" : "");
+      }    
     
       bubble.setAttribute("data-message-id", msg.id);
     
@@ -1081,7 +1110,9 @@ var ChatWidget = (function () {
       /* =========================
         ENSAMBLAR TODO (ORDEN CORRECTO)
       ========================= */
-      if (isMine) {
+      if (isBot) {
+        row.appendChild(bubble); // sin botón de reacción
+      } else if (isMine) {
         // 😊 [acciones] [mensaje]
         row.appendChild(actions);
         row.appendChild(bubble);
@@ -1090,6 +1121,7 @@ var ChatWidget = (function () {
         row.appendChild(bubble);
         row.appendChild(actions);
       }
+      
 
       // el menú SIEMPRE va al final para flotar encima
       row.appendChild(menu);

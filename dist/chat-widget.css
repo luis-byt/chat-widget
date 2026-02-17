@@ -321,6 +321,65 @@
   opacity: 0.7;
 }
 
+/* =========================
+   BOT MESSAGE STYLE
+========================= */
+
+.message-row.bot {
+  justify-content: flex-start;
+}
+
+.aware-message.bot {
+  background: #f3f0ff;
+  color: #2c2c54;
+  border: 1px solid #d6d1ff;
+  max-width: 75%;
+}
+
+.aware-message.bot .message-meta {
+  color: #6c63ff;
+  font-weight: 500;
+}
+
+/* pequeño indicador IA */
+.aware-message.bot::before {
+  content: "🤖 Asistente IA";
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #6c63ff;
+}
+
+/* =========================
+   AI BUTTON
+========================= */
+
+.aware-ai-btn {
+  border: none;
+  background: #6c63ff;
+  color: white;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.aware-ai-btn:hover {
+  opacity: 0.9;
+}
+
+/* =========================
+   INPUT AI MODE
+========================= */
+
+.aware-chat-input input.ai-mode {
+  background: #f3f0ff;
+  border-color: #6c63ff;
+}
+
+
 /* =====================================================
    REACCIONES
 ===================================================== */
